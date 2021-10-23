@@ -8,3 +8,7 @@ Steps to set up the project:
 3. Create essential folders like 1. logs 2. results 3. data
 4. Download dataset to data directory
 5. Train the model by executing "python3 run.py"
+
+For Download:
+1. wget http://3dshapenets.cs.princeton.edu/3DShapeNetsCode.zip
+2. unzip 3DShapeNetsCode.zip
