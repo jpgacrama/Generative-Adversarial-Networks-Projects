@@ -1,7 +1,5 @@
 # Complete Generator Adversarial Network which I typed
 
-# Contains items I type to learn how to create my own GAN
-
 import os
 from keras.engine import training
 import scipy.io as io
