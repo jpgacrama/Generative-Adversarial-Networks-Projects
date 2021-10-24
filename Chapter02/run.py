@@ -12,9 +12,9 @@ from keras.layers import Input
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import Conv3D, Deconv3D
 from keras.layers.core import Activation
-from keras.layers.normalization import BatchNormalization
+from keras.layers import BatchNormalization
 from keras.models import Model
-from keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib
 import matplotlib.pyplot as plt
