@@ -2,6 +2,7 @@
 
 import os
 from keras.engine import training
+from keras.optimizer_v1 import Adam
 import scipy.io as io
 import numpy as np
 import scipy.ndimage as nd
@@ -13,6 +14,7 @@ from keras.layers.convolutional import Deconv3D, Conv3D
 from keras.layers.core import Activation
 from keras.layers.normalization.batch_normalization import BatchNormalization
 from keras.models import Model
+from tensorflow.keras import Sequential
 
 def clear():
   
@@ -100,6 +102,36 @@ def build_discriminator():
     dis_model = Model(inputs=dis_input_layer, outputs=layer)
     print(dis_model.summary())
     return dis_model
+
+def train_gan():
+    gen_learning_rate = 0.0025
+    dis_learning_rate = 0.00001
+    gen_beta = 0.5
+    dis_beta = 0.9
+    batch_size = 32
+    z_size = 200
+    DIR_PATH = './data/3DShapeNets'
+    generated_volumes_dir = 'generated_volumes'
+    log_dir = 'logs'
+
+    # Create Instances
+    generator = build_generator()
+    discriminator = build_discriminator()
+
+    # Specify Optimizer
+    gen_optimizer = Adam(lr=gen_learning_rate, beta_1=gen_beta)
+    dis_optimimzer = Adam(lr=dis_learning_rate, beta_1=dis_beta)
+
+    # Compile networks
+    generator.compile(loss='binary_crossentropy', optimizer=gen_optimizer)
+    discriminator.compile(loss='binary_crossentropy', optimizer=dis_optimimzer)
+
+    # Create and compile the adversarial model
+    discriminator.trainable = False
+    adversarial_model = Sequential()
+    adversarial_model.add(generator)
+    adversarial_model.add(discriminator)
+    adversarial_model.compile(loss="binary_crossentropy", optimizer=Adam(lr=gen_learning_rate, beta_1=beta))
 
 def main():
     clear()
