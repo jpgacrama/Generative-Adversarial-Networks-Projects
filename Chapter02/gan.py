@@ -108,6 +108,7 @@ def train_gan():
     dis_learning_rate = 0.00001
     gen_beta = 0.5
     dis_beta = 0.9
+    adversarialModel_beta = 0.5
     batch_size = 32
     z_size = 200
     DIR_PATH = './data/3DShapeNets'
@@ -131,7 +132,7 @@ def train_gan():
     adversarial_model = Sequential()
     adversarial_model.add(generator)
     adversarial_model.add(discriminator)
-    adversarial_model.compile(loss="binary_crossentropy", optimizer=Adam(lr=gen_learning_rate, beta_1=beta))
+    adversarial_model.compile(loss="binary_crossentropy", optimizer=Adam(lr=gen_learning_rate, beta_1=adversarialModel_beta))
 
 def main():
     clear()
