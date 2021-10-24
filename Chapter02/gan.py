@@ -103,7 +103,7 @@ def build_discriminator():
     print(dis_model.summary())
     return dis_model
 
-def train_gan():
+def main():
     gen_learning_rate = 0.0025
     dis_learning_rate = 0.00001
     gen_beta = 0.5
@@ -133,19 +133,6 @@ def train_gan():
     adversarial_model.add(generator)
     adversarial_model.add(discriminator)
     adversarial_model.compile(loss="binary_crossentropy", optimizer=Adam(lr=gen_learning_rate, beta_1=adversarialModel_beta))
-
-def main():
-    clear()
-    print(f'Current Working Directory: {os.getcwd()}')
-    voxels = io.loadmat('./3DShapeNets/volumetric_data/airplane/30/train/3e73b236f62d05337678474be485ca_12.mat')['instance']
-    voxels = np.pad(voxels, (1,1), 'constant', constant_values = (0,0))
-    voxels = nd.zoom(voxels, 2, mode='constant', order=0)
-    print(f'Shape of Voxels: {np.shape(voxels)}')
-
-    fig = plt.figure()
-    ax = fig.add_subplot(projection='3d', aspect='auto')
-    ax.voxels(voxels, edgecolor="red")
-    plt.show()
 
 if __name__ == "__main__":
     main()
