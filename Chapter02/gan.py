@@ -31,7 +31,6 @@ def build_generator():
     Create a Generator Model with hyperparameters values defined as follows
     :return: Generator network
     """
-
     z_size = 200
     gen_filters = [512, 256, 128, 64, 1]
     gen_kernel_sizes = [4, 4, 4, 4, 4]
@@ -66,6 +65,10 @@ def build_generator():
     return gen_model
 
 def build_discriminator():
+    """
+    Create a Discriminator Model using hyperparameters values defined as follows
+    :return: Discriminator network
+    """
     dis_input_shape = (64, 64, 64, 1)
     dis_filters = [64, 128, 256, 512, 1]
     dis_kernel_sizes = [4, 4, 4, 4, 4]
@@ -85,6 +88,18 @@ def build_discriminator():
                    padding=dis_paddings[0])(dis_input_layer)
     layer = BatchNormalization()(layer, training=True)
     layer = LeakyReLU(dis_alphas[0])(layer)
+
+    # Add 4 more convolutional blocks
+    for i in range(dis_convolutional_blocks - 1):
+        layer = Conv3D(filters=dis_filters[i+1],
+                       kernel_size=dis_kernel_sizes[i+1],
+                       strides=dis_strides[i+1],
+                       padding=dis_paddings[i+1])(layer)
+        layer = BatchNormalization()(layer, training=True)
+        if dis_activations[i+1] == 'leaky_relu':
+            layer = LeakyReLU(dis_alphas[i+1])(layer)
+
+    dis_model = Model(inputs=dis_input_layer, outputs=layer)
 
 def main():
     clear()
