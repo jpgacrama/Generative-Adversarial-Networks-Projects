@@ -3,14 +3,15 @@
 # Contains items I type to learn how to create my own GAN
 
 import os
+from keras.engine import training
 import scipy.io as io
 import numpy as np
 import scipy.ndimage as nd
 import matplotlib.pyplot as plt
 from os import system, name  
 from keras.backend import shape
-from keras.layers import Input
-from keras.layers.convolutional import Deconv3D
+from keras.layers import Input, LeakyReLU
+from keras.layers.convolutional import Deconv3D, Conv3D
 from keras.layers.core import Activation
 from keras.layers.normalization.batch_normalization import BatchNormalization
 from keras.models import Model
@@ -44,8 +45,8 @@ def build_generator():
 
     # First 3D transpose convolution otherwise known in Keras as Deconvolution
     layer = Deconv3D(filters=gen_filters[0],
-                        kernel_size=gen_kernel_sizes[0],
-                        strides=gen_strides[0])(input_layer) 
+                     kernel_size=gen_kernel_sizes[0],
+                     strides=gen_strides[0])(input_layer) 
     layer = BatchNormalization()(layer, training=True)
     layer = Activation(activation=gen_activations[0])(layer)
 
@@ -64,14 +65,39 @@ def build_generator():
     gen_model.summary()
     return gen_model
 
-clear()
-print(f'Current Working Directory: {os.getcwd()}')
-voxels = io.loadmat('./3DShapeNets/volumetric_data/airplane/30/train/3e73b236f62d05337678474be485ca_12.mat')['instance']
-voxels = np.pad(voxels, (1,1), 'constant', constant_values = (0,0))
-voxels = nd.zoom(voxels, 2, mode='constant', order=0)
-print(f'Shape of Voxels: {np.shape(voxels)}')
+def build_discriminator():
+    dis_input_shape = (64, 64, 64, 1)
+    dis_filters = [64, 128, 256, 512, 1]
+    dis_kernel_sizes = [4, 4, 4, 4, 4]
+    dis_strides = [2, 2, 2, 2, 1]
+    dis_paddings = ['same', 'same', 'same', 'same', 'valid']
+    dis_alphas = [0.2, 0.2, 0.2, 0.2, 0.2]
+    dis_activations = ['leaky_relu', 'leaky_relu', 'leaky_relu', 'leaky_relu', 'sigmoid']
+    dis_convolutional_blocks = 5
+    
+    # Create the input layer
+    dis_input_layer = Input(shape=dis_input_shape)
 
-fig = plt.figure()
-ax = fig.add_subplot(projection='3d', aspect='auto')
-ax.voxels(voxels, edgecolor="red")
-plt.show()
+    # The first 3D convolution block
+    layer = Conv3D(filters=dis_filters[0],
+                   kernel=dis_kernel_sizes[0],
+                   strides=dis_strides[0],
+                   padding=dis_paddings[0])(dis_input_layer)
+    layer = BatchNormalization()(layer, training=True)
+    layer = LeakyReLU(dis_alphas[0])(layer)
+
+def main():
+    clear()
+    print(f'Current Working Directory: {os.getcwd()}')
+    voxels = io.loadmat('./3DShapeNets/volumetric_data/airplane/30/train/3e73b236f62d05337678474be485ca_12.mat')['instance']
+    voxels = np.pad(voxels, (1,1), 'constant', constant_values = (0,0))
+    voxels = nd.zoom(voxels, 2, mode='constant', order=0)
+    print(f'Shape of Voxels: {np.shape(voxels)}')
+
+    fig = plt.figure()
+    ax = fig.add_subplot(projection='3d', aspect='auto')
+    ax.voxels(voxels, edgecolor="red")
+    plt.show()
+
+if __name__ == "__main__":
+    main()
