@@ -100,6 +100,8 @@ def build_discriminator():
             layer = LeakyReLU(dis_alphas[i+1])(layer)
 
     dis_model = Model(inputs=dis_input_layer, outputs=layer)
+    print(dis_model.summary())
+    return dis_model
 
 def main():
     clear()
