@@ -2,14 +2,15 @@
 
 import os
 import time
+import tensorflow as tf
+from tensorflow import keras
 from keras.engine import training
-from keras.optimizer_v1 import Adam
+from tensorflow.keras.optimizers import Adam
 import scipy.io as io
 import numpy as np
 import scipy.ndimage as nd
 import matplotlib.pyplot as plt
 from os import system, name  
-import tensorflow as tf
 from keras.backend import shape
 from keras.layers import Input, LeakyReLU
 from keras.layers.convolutional import Deconv3D, Conv3D
