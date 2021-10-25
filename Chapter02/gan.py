@@ -46,7 +46,7 @@ def build_generator():
     gen_convolutional_blocks = 5
 
     # Create the input layer
-    input_layer = Input(shape=gen_input_shape)
+    input_layer = Input(shape=gen_input_shape, name='Generator Input Layer')
 
     # First 3D transpose convolution otherwise known in Keras as Deconvolution
     layer = Deconv3D(filters=gen_filters[0],
@@ -85,7 +85,7 @@ def build_discriminator():
     dis_convolutional_blocks = 5
     
     # Create the input layer
-    dis_input_layer = Input(shape=dis_input_shape)
+    dis_input_layer = Input(shape=dis_input_shape, name='Discriminator Input Layer')
 
     # The first 3D convolution block
     layer = Conv3D(filters=dis_filters[0],
@@ -108,7 +108,7 @@ def build_discriminator():
             layer = Activation(activation='sigmoid')(layer)
 
     dis_model = Model(inputs=[dis_input_layer], outputs=layer)
-    print(dis_model.summary())
+    dis_model.summary()
     return dis_model
 
 def getVoxelsFromMat(path, cube_len=64):
@@ -161,7 +161,7 @@ def main():
     gen_losses = []
     dis_losses = []
 
-    # Create Instances
+    # Build the Generator and Discriminator
     generator = build_generator()
     discriminator = build_discriminator()
 
@@ -175,10 +175,11 @@ def main():
 
     # Create and compile the adversarial model
     discriminator.trainable = False
-    adversarial_model = Sequential()
+    adversarial_model = Sequential(name='Adversarial Model')
     adversarial_model.add(generator)
     adversarial_model.add(discriminator)
     adversarial_model.compile(loss='binary_crossentropy', optimizer=Adam(learning_rate=gen_learning_rate, beta_1=adversarialModel_beta))
+    adversarial_model.summary()
 
     # Getting images
     volumes = get3ImagesForACategory(obj='airplane', train=True, obj_ratio=1.0)
