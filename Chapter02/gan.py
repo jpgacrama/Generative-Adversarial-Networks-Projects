@@ -41,7 +41,7 @@ def build_generator():
     gen_filters = [512, 256, 128, 64, 1]
     gen_kernel_sizes = [4, 4, 4, 4, 4]
     gen_strides = [1, 2, 2, 2, 2]
-    gen_input_shape = (1, 1, 1, z_size)
+    gen_input_shape = (4,4,4, z_size)
     gen_activations = ['relu', 'relu', 'relu', 'relu', 'sigmoid']
     gen_convolutional_blocks = 5
 
@@ -199,7 +199,7 @@ def main():
         for index in range(number_of_batches):
             print(f'Batch: {index + 1}')
 
-            z_sample = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
+            z_sample = np.random.normal(0, 0.33, size=[batch_size, 4, 4, 4, z_size]).astype(np.float32)
             volumes_batch = volumes[index * batch_size:(index + 1) * batch_size, :, :, :]
 
             # Generate Fake images'
@@ -218,7 +218,7 @@ def main():
                     
             # Calculate total discriminator loss
             d_loss = 0.5 * (loss_real + loss_fake)
-            z = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
+            z = np.random.normal(0, 0.33, size=[batch_size, 4, 4, 4, z_size]).astype(np.float32)
 
             # Train the adversarial model
             g_loss = adversarial_model.train_on_batch(z, np.reshape([1] * batch_size, (-1, 1, 1, 1, 1)))
@@ -229,7 +229,7 @@ def main():
 
             # Generate and save the 3D images after each epoch
             if index % 10 == 0:
-                z_sample2 = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
+                z_sample2 = np.random.normal(0, 0.33, size=[batch_size, 4, 4, 4, z_size]).astype(np.float32)
                 generated_volumes = generator.predict(z_sample2, verbose=3)
             
             for i, generated_volume in enumerate(generated_volumes[:5]):
@@ -256,7 +256,7 @@ def main():
         discriminator.load_weights(os.path.join('models', 'discriminator_weights.h5'), True)
 
         # Generate 3D models
-        z_sample = np.random.normal(0, 1, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
+        z_sample = np.random.normal(0, 1, size=[batch_size, 4, 4, 4, z_size]).astype(np.float32)
         generated_volumes = generator.predict(z_sample, verbose=3)
 
         for i, generated_volume in enumerate(generated_volumes[:2]):
