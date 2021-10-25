@@ -41,7 +41,7 @@ def build_generator():
     gen_filters = [512, 256, 128, 64, 1]
     gen_kernel_sizes = [4, 4, 4, 4, 4]
     gen_strides = [1, 2, 2, 2, 2]
-    gen_input_shape = (4,4,4, z_size)
+    gen_input_shape = (1, 1, 1, z_size)
     gen_activations = ['relu', 'relu', 'relu', 'relu', 'sigmoid']
     gen_convolutional_blocks = 5
 
@@ -200,7 +200,8 @@ def main():
         for index in range(number_of_batches):
             print(f'Batch: {index + 1}')
 
-            z_sample = np.random.normal(0, 0.33, size=[batch_size, 4, 4, 4, z_size]).astype(np.float32)
+            # TODO: z_sample is fixed in size.. I need this to be dynamic according to the shape of the layers
+            z_sample = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
             volumes_batch = volumes[index * batch_size:(index + 1) * batch_size, :, :, :]
 
             # Generate Fake images'
