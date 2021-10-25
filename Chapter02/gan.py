@@ -9,6 +9,7 @@ import numpy as np
 import scipy.ndimage as nd
 import matplotlib.pyplot as plt
 from os import system, name  
+import tensorflow as tf
 from keras.backend import shape
 from keras.layers import Input, LeakyReLU
 from keras.layers.convolutional import Deconv3D, Conv3D
