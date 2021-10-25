@@ -137,7 +137,9 @@ def write_log(callback, name, value, batch_no):
     callback.writer.add_summary(summary, batch_no)
     callback.writer.flush()
 
-if __name__ == '__main__':
+def main():
+    clear() # Clears the terminal 
+    
     # Hyperparameters
     gen_learning_rate = 0.0025
     dis_learning_rate = 0.00001
@@ -258,3 +260,6 @@ if __name__ == '__main__':
             voxels[voxels < 0.5] = 0.
             voxels[voxels >= 0.5] = 1.
             saveFromVoxels(voxels, 'results/gen_{}'.format(i))
+
+if __name__ == '__main__':
+    main()
