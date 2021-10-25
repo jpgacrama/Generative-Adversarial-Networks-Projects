@@ -11,4 +11,4 @@ Steps to set up the project:
 
 For Download:
 1. wget http://3dshapenets.cs.princeton.edu/3DShapeNetsCode.zip
-2. unzip 3DShapeNetsCode.zip
+2. unzip 3DShapeNetsCode.zip to data directory

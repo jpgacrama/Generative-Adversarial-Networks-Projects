@@ -166,6 +166,20 @@ if __name__ == '__main__':
     for epoch in range(epochs):
         print(f'\nEpoch: {epoch}')
 
+        number_of_batches = int(volumes.shape[0] / batch_size)
+        print(f"Number of batches: {number_of_batches}")
+        
+        for index in range(number_of_batches):
+            print(f"Batch: {index + 1}")
+
+            z_sample = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, 
+                        z_size]).astype(np.float32)
+            volumes_batch = volumes[index * batch_size:(index + 1) * batch_size, 
+                        :, :, :]
+
+            # Generate Fake images
+            gen_volumes = generator.predict(z_sample,verbose=3)
+
     # Create two lists to store losses
     gen_losses = []
     dis_losses = []
