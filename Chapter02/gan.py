@@ -20,7 +20,7 @@ from keras.models import Model
 from tensorflow.keras import Sequential
 from keras.callbacks import TensorBoard
 
-DIR_PATH = './data/3DShapeNets'
+DIR_PATH = './data/3DShapeNets/volumetric_data/'
 
 def clear():
   
@@ -166,8 +166,8 @@ def main():
     discriminator = build_discriminator()
 
     # Specify Optimizer
-    gen_optimizer = Adam(lr=gen_learning_rate, beta_1=gen_beta)
-    dis_optimimzer = Adam(lr=dis_learning_rate, beta_1=dis_beta)
+    gen_optimizer = Adam(learning_rate=gen_learning_rate, beta_1=gen_beta)
+    dis_optimimzer = Adam(learning_rate=dis_learning_rate, beta_1=dis_beta)
 
     # Compile networks
     generator.compile(loss='binary_crossentropy', optimizer=gen_optimizer)
@@ -178,7 +178,7 @@ def main():
     adversarial_model = Sequential()
     adversarial_model.add(generator)
     adversarial_model.add(discriminator)
-    adversarial_model.compile(loss='binary_crossentropy', optimizer=Adam(lr=gen_learning_rate, beta_1=adversarialModel_beta))
+    adversarial_model.compile(loss='binary_crossentropy', optimizer=Adam(learning_rate=gen_learning_rate, beta_1=adversarialModel_beta))
 
     # Getting images
     volumes = get3ImagesForACategory(obj='airplane', train=True, obj_ratio=1.0)
