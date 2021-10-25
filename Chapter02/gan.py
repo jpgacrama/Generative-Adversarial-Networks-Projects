@@ -65,7 +65,7 @@ def build_generator():
         layer = Activation(activation=gen_activations[i+1])(layer)
 
     # Create a Keras Model
-    gen_model = Model(inputs=input_layer, outputs=layer)
+    gen_model = Model(inputs=[input_layer], outputs=layer)
     gen_model.summary()
     return gen_model
 
@@ -88,7 +88,7 @@ def build_discriminator():
 
     # The first 3D convolution block
     layer = Conv3D(filters=dis_filters[0],
-                   kernel=dis_kernel_sizes[0],
+                   kernel_size=dis_kernel_sizes[0],
                    strides=dis_strides[0],
                    padding=dis_paddings[0])(dis_input_layer)
     layer = BatchNormalization()(layer, training=True)
@@ -103,8 +103,10 @@ def build_discriminator():
         layer = BatchNormalization()(layer, training=True)
         if dis_activations[i+1] == 'leaky_relu':
             layer = LeakyReLU(dis_alphas[i+1])(layer)
+        elif dis_activations[i + 1] == 'sigmoid':
+            layer = Activation(activation='sigmoid')(layer)
 
-    dis_model = Model(inputs=dis_input_layer, outputs=layer)
+    dis_model = Model(inputs=[dis_input_layer], outputs=layer)
     print(dis_model.summary())
     return dis_model
 
