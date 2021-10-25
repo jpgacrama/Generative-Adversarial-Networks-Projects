@@ -122,7 +122,23 @@ def get3ImagesForACategory(obj='airplane', train=True, cube_len=64, obj_ratio=1.
     volumeBatch = np.asarray([getVoxelsFromMat(obj_path + f, cube_len) for f in fileList], dtype=np.bool)
     return volumeBatch
 
+def saveFromVoxels(voxels, path):
+    z, x, y = voxels.nonzero()
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(x, y, -z, zdir='z', c='red')
+    plt.savefig(path)
+
+def write_log(callback, name, value, batch_no):
+    summary = tf.Summary()
+    summary_value = summary.value.add()
+    summary_value.simple_value = value
+    summary_value.tag = name
+    callback.writer.add_summary(summary, batch_no)
+    callback.writer.flush()
+
 if __name__ == '__main__':
+    # Hyperparameters
     gen_learning_rate = 0.0025
     dis_learning_rate = 0.00001
     gen_beta = 0.5
@@ -133,6 +149,10 @@ if __name__ == '__main__':
     generated_volumes_dir = 'generated_volumes'
     log_dir = 'logs'
     epochs = 10
+    
+    # Create two lists to store losses
+    gen_losses = []
+    dis_losses = []
 
     # Create Instances
     generator = build_generator()
@@ -167,19 +187,50 @@ if __name__ == '__main__':
         print(f'\nEpoch: {epoch}')
 
         number_of_batches = int(volumes.shape[0] / batch_size)
-        print(f"Number of batches: {number_of_batches}")
+        print(f'Number of batches: {number_of_batches}')
         
         for index in range(number_of_batches):
-            print(f"Batch: {index + 1}")
+            print(f'Batch: {index + 1}')
 
-            z_sample = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, 
-                        z_size]).astype(np.float32)
-            volumes_batch = volumes[index * batch_size:(index + 1) * batch_size, 
-                        :, :, :]
+            z_sample = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
+            volumes_batch = volumes[index * batch_size:(index + 1) * batch_size, :, :, :]
 
-            # Generate Fake images
+            # Generate Fake images'
             gen_volumes = generator.predict(z_sample,verbose=3)
 
-    # Create two lists to store losses
-    gen_losses = []
-    dis_losses = []
+            # Make the discriminator network trainable
+            discriminator.trainable = True
+                    
+            # Create fake and real labels
+            labels_real = np.reshape([1] * batch_size, (-1, 1, 1, 1, 1))
+            labels_fake = np.reshape([0] * batch_size, (-1, 1, 1, 1, 1))
+                    
+            # Train the discriminator network
+            loss_real = discriminator.train_on_batch(volumes_batch, labels_real)
+            loss_fake = discriminator.train_on_batch(gen_volumes, labels_fake)
+                    
+            # Calculate total discriminator loss
+            d_loss = 0.5 * (loss_real + loss_fake)
+            z = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
+
+            # Train the adversarial model
+            g_loss = adversarial_model.train_on_batch(z, np.reshape([1] * batch_size, (-1, 1, 1, 1, 1)))
+        
+            # Append the losses
+            gen_losses.append(g_loss)
+            dis_losses.append(d_loss)
+
+            # Generate and save the 3D images after each epoch
+            if index % 10 == 0:
+                z_sample2 = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
+                generated_volumes = generator.predict(z_sample2, verbose=3)
+            
+            for i, generated_volume in enumerate(generated_volumes[:5]):
+                voxels = np.squeeze(generated_volume)
+                voxels[voxels < 0.5] = 0.
+                voxels[voxels >= 0.5] = 1.
+                saveFromVoxels(voxels, f"results/img_{epoch}_{index}_{i}")
+
+        # Save losses to Tensorboard
+        write_log(tensorboard, 'g_loss', np.mean(gen_losses), epoch)
+        write_log(tensorboard, 'd_loss', np.mean(dis_losses), epoch)
