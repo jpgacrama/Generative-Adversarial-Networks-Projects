@@ -135,12 +135,11 @@ def saveFromVoxels(voxels, path):
     plt.savefig(path)
 
 def write_log(callback, name, value, batch_no):
-    summary = tf.Summary()
-    summary_value = summary.value.add()
-    summary_value.simple_value = value
-    summary_value.tag = name
-    callback.writer.add_summary(summary, batch_no)
-    callback.writer.flush()
+    writer = tf.summary.create_file_writer(callback.log_dir)
+    with writer.as_default():
+        # other model code would go here
+        tf.summary.scalar(name, value, description=batch_no)
+        writer.flush()
 
 def main():
     clear() # Clears the terminal 
