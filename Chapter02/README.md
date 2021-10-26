@@ -1,4 +1,5 @@
 ## 3D-GAN - Generating Shapes Using GANs
+## THERE IS A BUG IN TENSORFLOW FOR MACOS. This is working fine on a Windows laptop with CUDA support
 
 Python 3.6
 
