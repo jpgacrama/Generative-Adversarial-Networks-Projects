@@ -3,22 +3,20 @@
 import os
 import time
 import tensorflow as tf
-from tensorflow import keras
-from keras.engine import training
 from tensorflow.keras.optimizers import Adam
 import scipy.io as io
 import numpy as np
 import scipy.ndimage as nd
 import matplotlib.pyplot as plt
 from os import system, name  
-from keras.backend import shape
-from keras.layers import Input, LeakyReLU
-from keras.layers.convolutional import Deconv3D, Conv3D
-from keras.layers.core import Activation
-from keras.layers.normalization.batch_normalization import BatchNormalization
-from keras.models import Model
+from tensorflow.keras.backend import shape
+from tensorflow.keras.layers import Input, LeakyReLU
+from tensorflow.keras.layers import Conv3DTranspose, Conv3D
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.models import Model
 from tensorflow.keras import Sequential
-from keras.callbacks import TensorBoard
+from tensorflow.keras.callbacks import TensorBoard
 
 DIR_PATH = './data/3DShapeNets/volumetric_data/'
 
@@ -49,7 +47,7 @@ def build_generator():
     input_layer = Input(shape=gen_input_shape, name='Generator Input Layer')
 
     # First 3D transpose convolution otherwise known in Keras as Deconvolution
-    layer = Deconv3D(filters=gen_filters[0],
+    layer = Conv3DTranspose(filters=gen_filters[0],
                      kernel_size=gen_kernel_sizes[0],
                      strides=gen_strides[0])(input_layer) 
     layer = BatchNormalization()(layer, training=True)
@@ -57,7 +55,7 @@ def build_generator():
 
     # Add 4 3D transpose convolution blocks
     for i in range(gen_convolutional_blocks - 1):
-        layer = Deconv3D(
+        layer = Conv3DTranspose(
                     filters=gen_filters[i+1],
                     kernel_size=gen_kernel_sizes[i+1],
                     strides=gen_strides[i+1],
