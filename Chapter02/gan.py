@@ -205,7 +205,7 @@ def main():
             volumes_batch = volumes[index * batch_size:(index + 1) * batch_size, :, :, :]
 
             # Generate Fake images'
-            gen_volumes = generator.predict(z_sample,verbose=3)
+            gen_volumes = generator.predict(z_sample,verbose=1)
 
             # Make the discriminator network trainable
             discriminator.trainable = True
@@ -232,7 +232,7 @@ def main():
             # Generate and save the 3D images after each epoch
             if index % 10 == 0:
                 z_sample2 = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
-                generated_volumes = generator.predict(z_sample2, verbose=3)
+                generated_volumes = generator.predict(z_sample2, verbose=1)
             
             for i, generated_volume in enumerate(generated_volumes[:5]):
                 voxels = np.squeeze(generated_volume)
@@ -259,7 +259,7 @@ def main():
 
         # Generate 3D models
         z_sample = np.random.normal(0, 1, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
-        generated_volumes = generator.predict(z_sample, verbose=3)
+        generated_volumes = generator.predict(z_sample, verbose=1)
 
         for i, generated_volume in enumerate(generated_volumes[:2]):
             voxels = np.squeeze(generated_volume)
