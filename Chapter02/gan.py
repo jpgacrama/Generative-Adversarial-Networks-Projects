@@ -20,6 +20,9 @@ from tensorflow.keras.callbacks import TensorBoard
 
 DIR_PATH = './data/3DShapeNets/volumetric_data/'
 
+# Fixed problems with Error #15: Initializing libiomp5md.dll, but found libiomp5 already initialized.
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+
 def clear():
   
     # for windows
@@ -173,7 +176,7 @@ def main():
 
     # Create and compile the adversarial model
     discriminator.trainable = False
-    adversarial_model = Sequential(name='Adversarial Model')
+    adversarial_model = Sequential(name='AdversarialModel')
     adversarial_model.add(generator)
     adversarial_model.add(discriminator)
     adversarial_model.compile(loss='binary_crossentropy', optimizer=Adam(learning_rate=gen_learning_rate, beta_1=adversarialModel_beta))
@@ -181,7 +184,7 @@ def main():
 
     # Getting images
     volumes = get3ImagesForACategory(obj='airplane', train=True, obj_ratio=1.0)
-    volumes = volumes[..., np.newaxis].astype(np.float)
+    volumes = volumes[..., np.newaxis].astype(float)
 
     # Creating the Tensorflow callback class
     tensorboard = TensorBoard(log_dir='{}/{}'.format(log_dir, time.time()))
@@ -198,7 +201,6 @@ def main():
         for index in range(number_of_batches):
             print(f'Batch: {index + 1}')
 
-            # TODO: z_sample is fixed in size.. I need this to be dynamic according to the shape of the layers
             z_sample = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
             volumes_batch = volumes[index * batch_size:(index + 1) * batch_size, :, :, :]
 
@@ -218,7 +220,7 @@ def main():
                     
             # Calculate total discriminator loss
             d_loss = 0.5 * (loss_real + loss_fake)
-            z = np.random.normal(0, 0.33, size=[batch_size, 4, 4, 4, z_size]).astype(np.float32)
+            z = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
 
             # Train the adversarial model
             g_loss = adversarial_model.train_on_batch(z, np.reshape([1] * batch_size, (-1, 1, 1, 1, 1)))
@@ -229,7 +231,7 @@ def main():
 
             # Generate and save the 3D images after each epoch
             if index % 10 == 0:
-                z_sample2 = np.random.normal(0, 0.33, size=[batch_size, 4, 4, 4, z_size]).astype(np.float32)
+                z_sample2 = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
                 generated_volumes = generator.predict(z_sample2, verbose=3)
             
             for i, generated_volume in enumerate(generated_volumes[:5]):
@@ -256,7 +258,7 @@ def main():
         discriminator.load_weights(os.path.join('models', 'discriminator_weights.h5'), True)
 
         # Generate 3D models
-        z_sample = np.random.normal(0, 1, size=[batch_size, 4, 4, 4, z_size]).astype(np.float32)
+        z_sample = np.random.normal(0, 1, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
         generated_volumes = generator.predict(z_sample, verbose=3)
 
         for i, generated_volume in enumerate(generated_volumes[:2]):
