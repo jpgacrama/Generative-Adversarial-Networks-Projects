@@ -121,7 +121,7 @@ def get3ImagesForACategory(obj='airplane', train=True, cube_len=64, obj_ratio=1.
     obj_path += 'train/' if train else 'test/'
     fileList = [f for f in os.listdir(obj_path) if f.endswith('.mat')]
     fileList = fileList[0:int(obj_ratio * len(fileList))]
-    volumeBatch = np.asarray([getVoxelsFromMat(obj_path + f, cube_len) for f in fileList], dtype=np.bool)
+    volumeBatch = np.asarray([getVoxelsFromMat(obj_path + f, cube_len) for f in fileList], dtype=bool)
     return volumeBatch
 
 def saveFromVoxels(voxels, path):
