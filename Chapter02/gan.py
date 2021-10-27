@@ -133,6 +133,7 @@ def saveFromVoxels(voxels, path):
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(x, y, -z, zdir='z', c='red')
     plt.savefig(path)
+    plt.close()
 
 def write_log(callback, name, value, batch_no):
     writer = tf.summary.create_file_writer(callback.log_dir)
