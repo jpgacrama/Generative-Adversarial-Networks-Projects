@@ -24,14 +24,13 @@ DIR_PATH = './data/3DShapeNets/volumetric_data/'
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 def clear():
-  
     # for windows
-    if name == 'nt':
-        _ = system('cls')
+    if os.name == 'nt':
+        _ = os.system('cls')
   
     # for mac and linux(here, os.name is 'posix')
     else:
-        _ = system('clear')
+        _ = os.system('clear')
 
 def build_generator():
     '''
