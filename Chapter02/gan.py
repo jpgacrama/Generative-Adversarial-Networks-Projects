@@ -182,17 +182,21 @@ def main():
     adversarial_model.summary()
 
     # Getting images
+    print('\nGetting Images')
     volumes = get3ImagesForACategory(obj='airplane', train=True, obj_ratio=1.0)
     volumes = volumes[..., np.newaxis].astype(float)
+    print(f'Obtained {len(volumes)} images')
 
     # Creating the Tensorflow callback class
+    print('\nCreating TensorBoard callback')
     tensorboard = TensorBoard(log_dir='{}/{}'.format(log_dir, time.time()))
     tensorboard.set_model(generator)
     tensorboard.set_model(discriminator)
 
     # Run the simulation for a specified number of epochs
+    print('\n\n ############################# Starting Simulation #############################\n\n')
     for epoch in range(epochs):
-        print(f'\nEpoch: {epoch}')
+        print(f'Epoch: {epoch}')
 
         number_of_batches = int(volumes.shape[0] / batch_size)
         print(f'Number of batches: {number_of_batches}')
