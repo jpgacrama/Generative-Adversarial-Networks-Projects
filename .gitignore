@@ -1,0 +1,10 @@
+*.zip
+3DShapeNets
+.vscode
+.DS_Store
+logs
+
+
+Chapter02/results/
+
+Chapter02/models/
