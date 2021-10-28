@@ -7,15 +7,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 from keras import Input, Model
-from keras.applications import InceptionResNetV2
+from keras.applications.inception_resnet_v2 import InceptionResNetV2
 from keras.callbacks import TensorBoard
-from keras.layers import Conv2D, Flatten, Dense, BatchNormalization, Reshape, concatenate, LeakyReLU, Lambda, \
-    K, Activation, UpSampling2D, Dropout
-from keras.optimizers import Adam
-from keras.utils import to_categorical
+from keras.layers import Conv2D, Flatten, Dense, BatchNormalization, Reshape, concatenate, LeakyReLU, Lambda
+from tensorflow.keras import backend as K
+from keras.layers import Activation, UpSampling2D, Dropout
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.utils import to_categorical
 from keras_preprocessing import image
 from scipy.io import loadmat
 
+# Fixed problems with Error #15: Initializing libiomp5md.dll, but found libiomp5 already initialized.
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+
+def clear():
+    # for windows
+    if os.name == 'nt':
+        _ = os.system('cls')
+  
+    # for mac and linux(here, os.name is 'posix')
+    else:
+        _ = os.system('clear')
 
 def build_encoder():
     """
@@ -196,12 +208,12 @@ def calculate_age(taken, dob):
 
 def load_data(wiki_dir, dataset='wiki'):
     # Load the wiki.mat file
-    meta = loadmat(os.path.join(wiki_dir, "{}.mat".format(dataset)))
+    meta = loadmat(os.path.join(wiki_dir, f"{dataset}.mat"))
 
     # Load the list of all files
     full_path = meta[dataset][0, 0]["full_path"][0]
 
-    # List of Matlab serial date numbers
+    # List of Matlab serial date number
     dob = meta[dataset][0, 0]["dob"][0]
 
     # List of years when photo was taken
@@ -303,7 +315,7 @@ def save_rgb_img(img, path):
 if __name__ == '__main__':
     # Define hyperparameters
     data_dir = "data"
-    wiki_dir = os.path.join(data_dir, "wiki_crop1")
+    wiki_dir = os.path.join(data_dir, "wiki_crop")
     epochs = 500
     batch_size = 2
     image_shape = (64, 64, 3)
@@ -312,6 +324,9 @@ if __name__ == '__main__':
     TRAIN_ENCODER = False
     TRAIN_GAN_WITH_FR = False
     fr_image_shape = (192, 192, 3)
+
+    # Clear screen
+    clear()
 
     # Define optimizers
     dis_optimizer = Adam(lr=0.0002, beta_1=0.5, beta_2=0.999, epsilon=10e-8)
