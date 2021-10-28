@@ -281,12 +281,9 @@ def euclidean_distance_loss(y_true, y_pred):
 
 
 def write_log(callback, name, value, batch_no):
-    summary = tf.Summary()
-    summary_value = summary.value.add()
-    summary_value.simple_value = value
-    summary_value.tag = name
-    callback.writer.add_summary(summary, batch_no)
-    callback.writer.flush()
+    writer = tf.summary.create_file_writer(callback.log_dir)
+    with writer.as_default():
+        tf.summary.scalar(name, value, step=batch_no)
 
 
 def save_rgb_img(img, path):
