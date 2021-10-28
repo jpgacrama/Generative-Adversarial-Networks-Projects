@@ -12,13 +12,24 @@ from keras.layers import Input
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.convolutional import Conv3D, Deconv3D
 from keras.layers.core import Activation
-from keras.layers import BatchNormalization
+from keras.layers import BatchNormalization, Dropout
 from keras.models import Model
 from tensorflow.keras.optimizers import Adam
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib
 import matplotlib.pyplot as plt
 
+# Fixed problems with Error #15: Initializing libiomp5md.dll, but found libiomp5 already initialized.
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+
+def clear():
+    # for windows
+    if os.name == 'nt':
+        _ = os.system('cls')
+  
+    # for mac and linux(here, os.name is 'posix')
+    else:
+        _ = os.system('clear')
 
 def build_generator():
     """
@@ -31,6 +42,7 @@ def build_generator():
     gen_input_shape = (1, 1, 1, z_size)
     gen_activations = ['relu', 'relu', 'relu', 'relu', 'sigmoid']
     gen_convolutional_blocks = 5
+    gen_dropout_rate = 0.2
 
     input_layer = Input(shape=gen_input_shape)
 
@@ -39,6 +51,7 @@ def build_generator():
                  kernel_size=gen_kernel_sizes[0],
                  strides=gen_strides[0])(input_layer)
     a = BatchNormalization()(a, training=True)
+    a = Dropout(gen_dropout_rate)(a)
     a = Activation(activation='relu')(a)
 
     # Next 4 3D transpose convolution(or 3D deconvolution) blocks
@@ -47,6 +60,7 @@ def build_generator():
                      kernel_size=gen_kernel_sizes[i + 1],
                      strides=gen_strides[i + 1], padding='same')(a)
         a = BatchNormalization()(a, training=True)
+        a = Dropout(gen_dropout_rate)(a)
         a = Activation(activation=gen_activations[i + 1])(a)
 
     gen_model = Model(inputs=[input_layer], outputs=[a])
@@ -64,9 +78,9 @@ def build_discriminator():
     dis_strides = [2, 2, 2, 2, 1]
     dis_paddings = ['same', 'same', 'same', 'same', 'valid']
     dis_alphas = [0.2, 0.2, 0.2, 0.2, 0.2]
-    dis_activations = ['leaky_relu', 'leaky_relu', 'leaky_relu',
-                       'leaky_relu', 'sigmoid']
+    dis_activations = ['leaky_relu', 'leaky_relu', 'leaky_relu', 'leaky_relu', 'sigmoid']
     dis_convolutional_blocks = 5
+    dis_dropout_rate = 0.2
 
     dis_input_layer = Input(shape=dis_input_shape)
 
@@ -76,6 +90,7 @@ def build_discriminator():
                strides=dis_strides[0],
                padding=dis_paddings[0])(dis_input_layer)
     # a = BatchNormalization()(a, training=True)
+    a = Dropout(dis_dropout_rate)(a)
     a = LeakyReLU(dis_alphas[0])(a)
 
     # Next 4 3D Convolutional Blocks
@@ -85,6 +100,7 @@ def build_discriminator():
                    strides=dis_strides[i + 1],
                    padding=dis_paddings[i + 1])(a)
         a = BatchNormalization()(a, training=True)
+        a = Dropout(dis_dropout_rate)(a)
         if dis_activations[i + 1] == 'leaky_relu':
             a = LeakyReLU(dis_alphas[i + 1])(a)
         elif dis_activations[i + 1] == 'sigmoid':
@@ -95,13 +111,9 @@ def build_discriminator():
 
 
 def write_log(callback, name, value, batch_no):
-    summary = tf.Summary()
-    summary_value = summary.value.add()
-    summary_value.simple_value = value
-    summary_value.tag = name
-    callback.writer.add_summary(summary, batch_no)
-    callback.writer.flush()
-
+    writer = tf.summary.create_file_writer(callback.log_dir)
+    with writer.as_default():
+        tf.summary.scalar(name, value, step=batch_no)
 
 """
 Load datasets
@@ -111,7 +123,7 @@ Load datasets
 def get3DImages(data_dir):
     all_files = np.random.choice(glob.glob(data_dir), size=10)
     # all_files = glob.glob(data_dir)
-    all_volumes = np.asarray([getVoxelsFromMat(f) for f in all_files], dtype=np.bool)
+    all_volumes = np.asarray([getVoxelsFromMat(f) for f in all_files], dtype=bool)
     return all_volumes
 
 
@@ -144,6 +156,9 @@ def plotAndSaveVoxel(file_path, voxel):
 
 
 if __name__ == '__main__':
+    # Clears the screen
+    clear()
+
     """
     Specify Hyperparameters
     """
@@ -155,13 +170,13 @@ if __name__ == '__main__':
     batch_size = 1
     z_size = 200
     epochs = 10
-    MODE = "train"
+    MODE = "predict"
 
     """
     Create models
     """
-    gen_optimizer = Adam(lr=gen_learning_rate, beta_1=beta)
-    dis_optimizer = Adam(lr=dis_learning_rate, beta_1=beta)
+    gen_optimizer = Adam(learning_rate=gen_learning_rate, beta_1=beta)
+    dis_optimizer = Adam(learning_rate=dis_learning_rate, beta_1=beta)
 
     discriminator = build_discriminator()
     discriminator.compile(loss='binary_crossentropy', optimizer=dis_optimizer)
@@ -179,7 +194,7 @@ if __name__ == '__main__':
 
     print("Loading data...")
     volumes = get3DImages(data_dir=data_dir)
-    volumes = volumes[..., np.newaxis].astype(np.float)
+    volumes = volumes[..., np.newaxis].astype(float)
     print("Data loaded...")
 
     tensorboard = TensorBoard(log_dir="logs/{}".format(time.time()))
@@ -190,18 +205,18 @@ if __name__ == '__main__':
     labels_fake = np.reshape(np.zeros((batch_size,)), (-1, 1, 1, 1, 1))
 
     if MODE == 'train':
+        print('\n\n####################### START TRAINING #######################\n\n')
         for epoch in range(epochs):
-            print("Epoch:", epoch)
+            print(f"\nEpoch: {epoch + 1} out of {len(range(epochs))}")
 
             gen_losses = []
             dis_losses = []
 
             number_of_batches = int(volumes.shape[0] / batch_size)
-            print("Number of batches:", number_of_batches)
             for index in range(number_of_batches):
-                print("Batch:", index + 1)
+                print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
 
-                z_sample = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
+                z_sample = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(float)
                 volumes_batch = volumes[index * batch_size:(index + 1) * batch_size, :, :, :]
 
                 # Next, generate volumes using the generate network
@@ -216,25 +231,27 @@ if __name__ == '__main__':
                     loss_fake = discriminator.train_on_batch(gen_volumes, labels_fake)
 
                     d_loss = 0.5 * np.add(loss_real, loss_fake)
-                    print("d_loss:{}".format(d_loss))
+                    print(f"\t\td_loss:{d_loss}")
 
                 else:
                     d_loss = 0.0
+                    print(f"\t\td_loss:{d_loss}")
+
 
                 discriminator.trainable = False
                 """
                 Train the generator network
                 """
-                z = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
+                z = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(float)
                 g_loss = adversarial_model.train_on_batch(z, labels_real)
-                print("g_loss:{}".format(g_loss))
+                print(f"\t\tg_loss:{g_loss}")
 
                 gen_losses.append(g_loss)
                 dis_losses.append(d_loss)
 
                 # Every 10th mini-batch, generate volumes and save them
                 if index % 10 == 0:
-                    z_sample2 = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
+                    z_sample2 = np.random.normal(0, 0.33, size=[batch_size, 1, 1, 1, z_size]).astype(float)
                     generated_volumes = generator.predict(z_sample2, verbose=3)
                     for i, generated_volume in enumerate(generated_volumes[:5]):
                         voxels = np.squeeze(generated_volume)
@@ -253,6 +270,7 @@ if __name__ == '__main__':
         discriminator.save_weights(os.path.join("models", "discriminator_weights.h5"))
 
     if MODE == 'predict':
+        print('\n\n####################### START PREDICTIONS #######################\n\n')
         # Create models
         generator = build_generator()
         discriminator = build_discriminator()
@@ -262,7 +280,7 @@ if __name__ == '__main__':
         discriminator.load_weights(os.path.join("models", "discriminator_weights.h5"), True)
 
         # Generate 3D models
-        z_sample = np.random.normal(0, 1, size=[batch_size, 1, 1, 1, z_size]).astype(np.float32)
+        z_sample = np.random.normal(0, 1, size=[batch_size, 1, 1, 1, z_size]).astype(float)
         generated_volumes = generator.predict(z_sample, verbose=3)
 
         for i, generated_volume in enumerate(generated_volumes[:2]):
