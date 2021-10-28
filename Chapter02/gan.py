@@ -17,6 +17,7 @@ from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.models import Model
 from tensorflow.keras import Sequential
 from tensorflow.keras.callbacks import TensorBoard
+from tensorflow.python.keras.backend import dropout
 
 DIR_PATH = './data/3DShapeNets/volumetric_data/'
 
@@ -44,14 +45,16 @@ def build_generator():
     gen_input_shape = (1, 1, 1, z_size)
     gen_activations = ['relu', 'relu', 'relu', 'relu', 'sigmoid']
     gen_convolutional_blocks = 5
+    gen_dropout_rate = 0.2
 
     # Create the input layer
     input_layer = Input(shape=gen_input_shape, name='Generator Input Layer')
 
     # First 3D transpose convolution otherwise known in Keras as Deconvolution
-    layer = Conv3DTranspose(filters=gen_filters[0],
-                     kernel_size=gen_kernel_sizes[0],
-                     strides=gen_strides[0])(input_layer) 
+    layer = Conv3DTranspose(
+                filters=gen_filters[0],
+                kernel_size=gen_kernel_sizes[0],
+                strides=gen_strides[0], dropout=gen_dropout_rate)(input_layer) 
     layer = BatchNormalization()(layer, training=True)
     layer = Activation(activation=gen_activations[0])(layer)
 
@@ -61,7 +64,8 @@ def build_generator():
                     filters=gen_filters[i+1],
                     kernel_size=gen_kernel_sizes[i+1],
                     strides=gen_strides[i+1],
-                    padding='same')(layer)
+                    padding='same',
+                    dropout=gen_dropout_rate)(layer)
         layer = BatchNormalization()(layer, training=True)
         layer = Activation(activation=gen_activations[i+1])(layer)
 
@@ -83,6 +87,7 @@ def build_discriminator():
     dis_alphas = [0.2, 0.2, 0.2, 0.2, 0.2]
     dis_activations = ['leaky_relu', 'leaky_relu', 'leaky_relu', 'leaky_relu', 'sigmoid']
     dis_convolutional_blocks = 5
+    dis_dropout_rate = 0.2
     
     # Create the input layer
     dis_input_layer = Input(shape=dis_input_shape, name='Discriminator Input Layer')
@@ -91,7 +96,8 @@ def build_discriminator():
     layer = Conv3D(filters=dis_filters[0],
                    kernel_size=dis_kernel_sizes[0],
                    strides=dis_strides[0],
-                   padding=dis_paddings[0])(dis_input_layer)
+                   padding=dis_paddings[0],
+                   dropout = dis_dropout_rate)(dis_input_layer)
     layer = BatchNormalization()(layer, training=True)
     layer = LeakyReLU(dis_alphas[0])(layer)
 
@@ -100,7 +106,8 @@ def build_discriminator():
         layer = Conv3D(filters=dis_filters[i+1],
                        kernel_size=dis_kernel_sizes[i+1],
                        strides=dis_strides[i+1],
-                       padding=dis_paddings[i+1])(layer)
+                       padding=dis_paddings[i+1],
+                       dropout = dis_dropout_rate)(layer)
         layer = BatchNormalization()(layer, training=True)
         if dis_activations[i+1] == 'leaky_relu':
             layer = LeakyReLU(dis_alphas[i+1])(layer)
