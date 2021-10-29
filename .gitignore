@@ -8,3 +8,5 @@ wiki_crop
 Chapter02/results/
 
 Chapter02/models/
+
+*.tar

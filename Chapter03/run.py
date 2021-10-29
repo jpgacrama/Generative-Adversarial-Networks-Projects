@@ -16,6 +16,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import to_categorical
 from keras_preprocessing import image
 from scipy.io import loadmat
+from tqdm import tqdm
 
 # Fixed problems with Error #15: Initializing libiomp5md.dll, but found libiomp5 already initialized.
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -257,9 +258,12 @@ def age_to_category(age_list):
 
 def load_images(data_dir, image_paths, image_shape):
     images = None
+    number_of_images = len(image_paths)
+    pbar = tqdm(total=number_of_images) # Init pbar
 
+    print(f'Loading {number_of_images} images')
     for i, image_path in enumerate(image_paths):
-        print()
+        pbar.update(n=1) # Increments counter
         try:
             # Load image
             loaded_image = image.load_img(os.path.join(data_dir, image_path), target_size=image_shape)
@@ -276,8 +280,9 @@ def load_images(data_dir, image_paths, image_shape):
             else:
                 images = np.concatenate([images, loaded_image], axis=0)
         except Exception as e:
-            print("Error:", i, e)
+            print(f"Error at {i} with Exception {e}")
 
+    print('Finished loading all images')
     return images
 
 
@@ -329,9 +334,9 @@ if __name__ == '__main__':
     clear()
 
     # Define optimizers
-    dis_optimizer = Adam(lr=0.0002, beta_1=0.5, beta_2=0.999, epsilon=10e-8)
-    gen_optimizer = Adam(lr=0.0002, beta_1=0.5, beta_2=0.999, epsilon=10e-8)
-    adversarial_optimizer = Adam(lr=0.0002, beta_1=0.5, beta_2=0.999, epsilon=10e-8)
+    dis_optimizer = Adam(learning_rate=0.0002, beta_1=0.5, beta_2=0.999, epsilon=10e-8)
+    gen_optimizer = Adam(learning_rate=0.0002, beta_1=0.5, beta_2=0.999, epsilon=10e-8)
+    adversarial_optimizer = Adam(learning_rate=0.0002, beta_1=0.5, beta_2=0.999, epsilon=10e-8)
 
     """
     Build and compile networks
@@ -365,7 +370,6 @@ if __name__ == '__main__':
     final_age_cat = np.reshape(np.array(age_cat), [len(age_cat), 1])
     classes = len(set(age_cat))
     y = to_categorical(final_age_cat, num_classes=len(set(age_cat)))
-
     loaded_images = load_images(wiki_dir, images, (image_shape[0], image_shape[1]))
 
     # Implement label smoothing
@@ -376,16 +380,16 @@ if __name__ == '__main__':
     Train the generator and the discriminator network
     """
     if TRAIN_GAN:
+        print(f'\n\n #################### TRAINING GAN ####################\n\n')
         for epoch in range(epochs):
-            print("Epoch:{}".format(epoch))
+            print(f"\nEpoch: {epoch + 1} out of {len(range(epochs))}")
 
             gen_losses = []
             dis_losses = []
 
             number_of_batches = int(len(loaded_images) / batch_size)
-            print("Number of batches:", number_of_batches)
             for index in range(number_of_batches):
-                print("Batch:{}".format(index + 1))
+                print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
 
                 images_batch = loaded_images[index * batch_size:(index + 1) * batch_size]
                 images_batch = images_batch / 127.5 - 1.0
@@ -405,7 +409,7 @@ if __name__ == '__main__':
                 d_loss_fake = discriminator.train_on_batch([initial_recon_images, y_batch], fake_labels)
 
                 d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
-                print("d_loss:{}".format(d_loss))
+                print(f"\td_loss:{d_loss}")
 
                 """
                 Train the generator network
@@ -417,7 +421,7 @@ if __name__ == '__main__':
 
                 g_loss = adversarial_model.train_on_batch([z_noise2, random_labels], [1] * batch_size)
 
-                print("g_loss:{}".format(g_loss))
+                print(f"\tg_loss:{g_loss}")
 
                 gen_losses.append(g_loss)
                 dis_losses.append(d_loss)
@@ -447,7 +451,7 @@ if __name__ == '__main__':
             generator.save_weights("generator.h5")
             discriminator.save_weights("discriminator.h5")
         except Exception as e:
-            print("Error:", e)
+            print(f"Error: {e}")
 
     """
     Train encoder
@@ -462,7 +466,7 @@ if __name__ == '__main__':
         try:
             generator.load_weights("generator.h5")
         except Exception as e:
-            print("Error:", e)
+            print(f"Error: {e}")
 
         z_i = np.random.normal(0, 1, size=(5000, z_shape))
 
@@ -471,15 +475,15 @@ if __name__ == '__main__':
         y = np.reshape(np.array(y), [len(y), 1])
         y = to_categorical(y, num_classes=num_classes)
 
+        print(f'\n\n #################### TRAINING ENCODER ####################\n\n')
         for epoch in range(epochs):
-            print("Epoch:", epoch)
+            print(f"\nEpoch: {epoch + 1} out of {len(range(epochs))}")
 
             encoder_losses = []
 
             number_of_batches = int(z_i.shape[0] / batch_size)
-            print("Number of batches:", number_of_batches)
             for index in range(number_of_batches):
-                print("Batch:", index + 1)
+                print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
 
                 z_batch = z_i[index * batch_size:(index + 1) * batch_size]
                 y_batch = y[index * batch_size:(index + 1) * batch_size]
@@ -488,7 +492,7 @@ if __name__ == '__main__':
 
                 # Train the encoder model
                 encoder_loss = encoder.train_on_batch(generated_images, z_batch)
-                print("Encoder loss:", encoder_loss)
+                print(f"\tEncoder loss: {encoder_loss}")
 
                 encoder_losses.append(encoder_loss)
 
@@ -539,15 +543,14 @@ if __name__ == '__main__':
         # Compile the model
         fr_adversarial_model.compile(loss=euclidean_distance_loss, optimizer=adversarial_optimizer)
 
+        print(f'\n\n #################### TRAINING GAN WITH FACE RECOGNITION ####################\n\n')
         for epoch in range(epochs):
-            print("Epoch:", epoch)
-
+            print(f"\nEpoch: {epoch + 1} out of {len(range(epochs))}")
             reconstruction_losses = []
 
             number_of_batches = int(len(loaded_images) / batch_size)
-            print("Number of batches:", number_of_batches)
             for index in range(number_of_batches):
-                print("Batch:", index + 1)
+                print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
 
                 images_batch = loaded_images[index * batch_size:(index + 1) * batch_size]
                 images_batch = images_batch / 127.5 - 1.0
@@ -561,7 +564,7 @@ if __name__ == '__main__':
 
                 reconstruction_loss = fr_adversarial_model.train_on_batch([images_batch, y_batch], real_embeddings)
 
-                print("Reconstruction loss:", reconstruction_loss)
+                print(f"\tReconstruction loss: {reconstruction_loss}")
 
                 reconstruction_losses.append(reconstruction_loss)
 
