@@ -84,7 +84,7 @@ def build_generator():
     latent_dims = 100
     num_classes = 6
 
-    input_z_noise = Input(shape=(latent_dims,))
+    input_z_noise = Input(shape=(latent_dims,), name='Generator')
     input_label = Input(shape=(num_classes,))
 
     x = concatenate([input_z_noise, input_label])
@@ -115,6 +115,7 @@ def build_generator():
     x = Activation('tanh')(x)
 
     model = Model(inputs=[input_z_noise, input_label], outputs=[x])
+    model.summary()
     return model
 
 
@@ -340,7 +341,7 @@ if __name__ == '__main__':
     data_dir = "data"
     wiki_dir = os.path.join(data_dir, "wiki_crop")
     epochs = 500
-    batch_size = 2
+    batch_size = 128
     image_shape = (64, 64, 3)
     z_shape = 100
     TRAIN_GAN = True
