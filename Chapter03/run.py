@@ -265,7 +265,7 @@ def load_images(data_dir, image_paths, image_shape):
     images = None
     number_of_images = len(image_paths)
     pbar = tqdm(total=number_of_images) # Init pbar
-    pickle_file_exists = FALSE
+    pickle_file_exists = False
 
     print(f'Loading {number_of_images} images')
 
@@ -274,12 +274,12 @@ def load_images(data_dir, image_paths, image_shape):
             # Deserialize class loaded_images
             loaded_images = pickle.load(pickle_in)
 
-        pickle_file_exists = TRUE
+        pickle_file_exists = True
         print(f'{PICKLE_FILE_NAME} is loaded successfully')
     except FileNotFoundError:
         print(f'{PICKLE_FILE_NAME} does not exist yet')
 
-    while pickle_file_exists == FALSE:
+    while pickle_file_exists == False:
         for i, image_path in enumerate(image_paths):
             pbar.update(n=1) # Increments counter
             try:
