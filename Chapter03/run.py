@@ -84,8 +84,8 @@ def build_generator():
     latent_dims = 100
     num_classes = 6
 
-    input_z_noise = Input(shape=(latent_dims,), name='Generator')
-    input_label = Input(shape=(num_classes,))
+    input_z_noise = Input(shape=(latent_dims,), name='Generator Z Noise')
+    input_label = Input(shape=(num_classes,), name='Generator Input Label')
 
     x = concatenate([input_z_noise, input_label])
 
@@ -115,7 +115,6 @@ def build_generator():
     x = Activation('tanh')(x)
 
     model = Model(inputs=[input_z_noise, input_label], outputs=[x])
-    model.summary()
     return model
 
 
@@ -132,8 +131,8 @@ def build_discriminator():
     """
     input_shape = (64, 64, 3)
     label_shape = (6,)
-    image_input = Input(shape=input_shape)
-    label_input = Input(shape=label_shape)
+    image_input = Input(shape=input_shape, name='Discriminator Input Image')
+    label_input = Input(shape=label_shape, name='Discriminator Label Input')
 
     x = Conv2D(64, kernel_size=3, strides=2, padding='same')(image_input)
     x = LeakyReLU(alpha=0.2)(x)
@@ -237,7 +236,7 @@ def load_data(wiki_dir, dataset='wiki'):
         age_list.append(age[index])
 
     # Return a list of all images and respective age
-    middle_index = len(images) // 2
+    middle_index = len(images) // 8 # Truncating the size for faster processing
     return images[:middle_index], age_list[:middle_index]
 
 
@@ -273,7 +272,6 @@ def load_images(data_dir, image_paths, image_shape):
 
     try:
         with open(PICKLE_FILE_NAME, 'rb') as pickle_in:
-            # Deserialize class loaded_images
             images = pickle.load(pickle_in)
 
         pickle_file_exists = True
@@ -281,9 +279,15 @@ def load_images(data_dir, image_paths, image_shape):
     except FileNotFoundError:
         print(f'{PICKLE_FILE_NAME} does not exist yet. Creating it.')
 
-    while pickle_file_exists == False:
+    except EOFError:
+        print(f'{PICKLE_FILE_NAME} is corrupted. Deleting it.')
+        os.remove(PICKLE_FILE_NAME)
+
+    except: # Handles all other exceptions
+        pass
+
+    if pickle_file_exists == False:
         for i, image_path in enumerate(image_paths):
-            pbar.update(n=1) # Increments counter
             try:
                 # Load image
                 loaded_image = image.load_img(os.path.join(data_dir, image_path), target_size=image_shape)
@@ -299,8 +303,13 @@ def load_images(data_dir, image_paths, image_shape):
                     images = loaded_image
                 else:
                     images = np.concatenate([images, loaded_image], axis=0)
+                
+                pbar.update(n=1) # Increments counter
             except Exception as e:
                 print(f"Error at {i} with Exception {e}")
+        
+        with open('pickle_objects.pkl', 'wb') as pickle_out:
+            pickle.dump(images, pickle_out)
 
     print('Finished loading all images')
     return images
@@ -439,7 +448,7 @@ if __name__ == '__main__':
                 random_labels = np.random.randint(0, 6, batch_size).reshape(-1, 1)
                 random_labels = to_categorical(random_labels, 6)
 
-                g_loss = adversarial_model.train_on_batch([z_noise2, random_labels], [1] * batch_size)
+                g_loss = adversarial_model.train_on_batch([z_noise2, random_labels], np.asarray([1] * batch_size))
 
                 print(f"\tg_loss:{g_loss}")
 
