@@ -272,7 +272,7 @@ def load_images(data_dir, image_paths, image_shape):
     try:
         with open(PICKLE_FILE_NAME, 'rb') as pickle_in:
             # Deserialize class loaded_images
-            loaded_images = pickle.load(pickle_in)
+            images = pickle.load(pickle_in)
 
         pickle_file_exists = True
         print(f'{PICKLE_FILE_NAME} is loaded successfully')
