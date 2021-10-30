@@ -2,6 +2,7 @@ import os
 import os
 import time
 from datetime import datetime
+from tkinter.constants import FALSE, TRUE
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,9 +18,13 @@ from tensorflow.keras.utils import to_categorical
 from keras_preprocessing import image
 from scipy.io import loadmat
 from tqdm import tqdm
+import pickle
 
 # Fixed problems with Error #15: Initializing libiomp5md.dll, but found libiomp5 already initialized.
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
+
+# Pickle Object to store variables
+PICKLE_FILE_NAME = 'pickle_objects.pkl'
 
 def clear():
     # for windows
@@ -260,27 +265,40 @@ def load_images(data_dir, image_paths, image_shape):
     images = None
     number_of_images = len(image_paths)
     pbar = tqdm(total=number_of_images) # Init pbar
+    pickle_file_exists = FALSE
 
     print(f'Loading {number_of_images} images')
-    for i, image_path in enumerate(image_paths):
-        pbar.update(n=1) # Increments counter
-        try:
-            # Load image
-            loaded_image = image.load_img(os.path.join(data_dir, image_path), target_size=image_shape)
 
-            # Convert PIL image to numpy ndarray
-            loaded_image = image.img_to_array(loaded_image)
+    try:
+        with open(PICKLE_FILE_NAME, 'rb') as pickle_in:
+            # Deserialize class loaded_images
+            loaded_images = pickle.load(pickle_in)
 
-            # Add another dimension (Add batch dimension)
-            loaded_image = np.expand_dims(loaded_image, axis=0)
+        pickle_file_exists = TRUE
+        print(f'{PICKLE_FILE_NAME} is loaded successfully')
+    except FileNotFoundError:
+        print(f'{PICKLE_FILE_NAME} does not exist yet')
 
-            # Concatenate all images into one tensor
-            if images is None:
-                images = loaded_image
-            else:
-                images = np.concatenate([images, loaded_image], axis=0)
-        except Exception as e:
-            print(f"Error at {i} with Exception {e}")
+    while pickle_file_exists == FALSE:
+        for i, image_path in enumerate(image_paths):
+            pbar.update(n=1) # Increments counter
+            try:
+                # Load image
+                loaded_image = image.load_img(os.path.join(data_dir, image_path), target_size=image_shape)
+
+                # Convert PIL image to numpy ndarray
+                loaded_image = image.img_to_array(loaded_image)
+
+                # Add another dimension (Add batch dimension)
+                loaded_image = np.expand_dims(loaded_image, axis=0)
+
+                # Concatenate all images into one tensor
+                if images is None:
+                    images = loaded_image
+                else:
+                    images = np.concatenate([images, loaded_image], axis=0)
+            except Exception as e:
+                print(f"Error at {i} with Exception {e}")
 
     print('Finished loading all images')
     return images
