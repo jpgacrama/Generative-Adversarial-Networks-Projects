@@ -4,6 +4,7 @@
 .vscode
 .DS_Store
 logs
+data
 wiki_crop
 
 Chapter02/results/

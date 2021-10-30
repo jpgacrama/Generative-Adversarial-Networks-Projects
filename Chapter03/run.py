@@ -237,7 +237,8 @@ def load_data(wiki_dir, dataset='wiki'):
         age_list.append(age[index])
 
     # Return a list of all images and respective age
-    return images, age_list
+    middle_index = len(images) // 2
+    return images[:middle_index], age_list[:middle_index]
 
 
 def age_to_category(age_list):
@@ -278,7 +279,7 @@ def load_images(data_dir, image_paths, image_shape):
         pickle_file_exists = True
         print(f'{PICKLE_FILE_NAME} is loaded successfully')
     except FileNotFoundError:
-        print(f'{PICKLE_FILE_NAME} does not exist yet')
+        print(f'{PICKLE_FILE_NAME} does not exist yet. Creating it.')
 
     while pickle_file_exists == False:
         for i, image_path in enumerate(image_paths):
