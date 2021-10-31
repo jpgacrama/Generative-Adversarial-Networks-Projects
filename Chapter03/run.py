@@ -2,7 +2,6 @@ import os
 import os
 import time
 from datetime import datetime
-from tkinter.constants import FALSE, TRUE
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,6 +26,8 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 PICKLE_IMAGES_FILE_NAME = 'pickle_images.pkl'
 PICKLE_TRAINING_GAN_FILE_NAME = 'pickle_training_gan.pkl'
 PICKLE_TRAINING_ENCODER_FILE_NAME = 'pickle_training_encoder.pkl'
+PICKLE_TRAINING_GAN_WITH_FR_FILE_NAME = 'pickle_training_encoder.pkl'
+
 
 def clear():
     # for windows
@@ -376,6 +377,27 @@ def load_data_when_training_encoder():
 
     return epochs_start, index_start
 
+def load_data_when_training_gan_with_fr():
+    epochs_start = 0
+    index_start = 0
+    try:
+        with open(PICKLE_TRAINING_GAN_WITH_FR_FILE_NAME, 'rb') as pickle_in:
+            epochs_start = pickle.load(pickle_in)
+            index_start = pickle.load(pickle_in)
+
+        print(f'{PICKLE_TRAINING_GAN_WITH_FR_FILE_NAME} is loaded successfully')
+    except FileNotFoundError:
+        print(f'{PICKLE_TRAINING_GAN_WITH_FR_FILE_NAME} does not exist yet. Creating it.')
+
+    except EOFError:
+        print(f'{PICKLE_TRAINING_GAN_WITH_FR_FILE_NAME} is corrupted. Deleting it.')
+        os.remove(PICKLE_TRAINING_GAN_WITH_FR_FILE_NAME)
+
+    except: # Handles all other exceptions
+        pass
+
+    return epochs_start, index_start
+
 def save_data_when_training_gan(epochs, index):
     with open(PICKLE_TRAINING_GAN_FILE_NAME, 'wb') as pickle_out:
         pickle.dump(epochs, pickle_out)
@@ -404,13 +426,13 @@ if __name__ == '__main__':
     # Define hyperparameters
     data_dir = "data"
     wiki_dir = os.path.join(data_dir, "wiki_crop")
-    epochs = 15
+    epochs = 50
     batch_size = 2
     image_shape = (64, 64, 3)
     z_shape = 100
     TRAIN_GAN = True
     TRAIN_ENCODER = True
-    TRAIN_GAN_WITH_FR = False
+    TRAIN_GAN_WITH_FR = True
     fr_image_shape = (192, 192, 3)
 
     # Clear screen
@@ -538,12 +560,19 @@ if __name__ == '__main__':
                 # Save to pickle to future use
                 save_data_when_training_gan(epoch, index)
 
-                # Save networks
+                # Save networks every 10th epoch
                 try:
                     generator.save_weights("generator.h5")
                     discriminator.save_weights("discriminator.h5")
                 except Exception as e:
                     print(f"Error: {e}")
+
+        # Save networks after all simulations are complete
+        try:
+            generator.save_weights("generator.h5")
+            discriminator.save_weights("discriminator.h5")
+        except Exception as e:
+            print(f"Error: {e}")
 
     """
     Train encoder
@@ -599,6 +628,11 @@ if __name__ == '__main__':
             # Save to pickle to future use
             save_data_when_training_encoder(epoch, index)
 
+            # Save encoder weights every 10th epoch
+            if epoch % 10 == 0:
+                # Save the encoder model
+                encoder.save_weights("encoder.h5")
+
         # Save the encoder model
         encoder.save_weights("encoder.h5")
 
@@ -643,13 +677,18 @@ if __name__ == '__main__':
         # Compile the model
         fr_adversarial_model.compile(loss=euclidean_distance_loss, optimizer=adversarial_optimizer)
 
+        # Call function to load data from previous training run
+        epochs_start = 0
+        index_start = 0
+        epochs_start, index_start = load_data_when_training_gan_with_fr()
+
         print(f'\n\n #################### TRAINING GAN WITH FACE RECOGNITION ####################\n\n')
-        for epoch in range(epochs):
+        for epoch in range(epochs_start, epochs):
             print(f"\nEpoch: {epoch + 1} out of {len(range(epochs))}")
             reconstruction_losses = []
 
             number_of_batches = int(len(loaded_images) / batch_size)
-            for index in range(number_of_batches):
+            for index in range(index_start, number_of_batches):
                 print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
 
                 images_batch = loaded_images[index * batch_size:(index + 1) * batch_size]
@@ -686,6 +725,10 @@ if __name__ == '__main__':
 
                 for i, img in enumerate(gen_images[:5]):
                     save_rgb_img(img, path="results/img_opt_{}_{}.png".format(epoch, i))
+
+                # Save improved weights for both of the networks every 10th epoch
+                generator.save_weights("generator_optimized.h5")
+                encoder.save_weights("encoder_optimized.h5")
 
         # Save improved weights for both of the networks
         generator.save_weights("generator_optimized.h5")
