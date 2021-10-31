@@ -377,7 +377,7 @@ if __name__ == '__main__':
     data_dir = "data"
     wiki_dir = os.path.join(data_dir, "wiki_crop")
     epochs = 500
-    batch_size = 128
+    batch_size = 2
     image_shape = (64, 64, 3)
     z_shape = 100
     TRAIN_GAN = True
