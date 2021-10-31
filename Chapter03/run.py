@@ -520,7 +520,7 @@ if __name__ == '__main__':
                 d_loss_fake = discriminator.train_on_batch([initial_recon_images, y_batch], fake_labels)
 
                 d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
-                print(f"\td_loss:{d_loss}")
+                # print(f"\td_loss:{d_loss}")
 
                 """
                 Train the generator network
@@ -532,7 +532,7 @@ if __name__ == '__main__':
 
                 g_loss = adversarial_model.train_on_batch([z_noise2, random_labels], np.asarray([1] * batch_size))
 
-                print(f"\tg_loss:{g_loss}")
+                # print(f"\tg_loss:{g_loss}")
 
                 gen_losses.append(g_loss)
                 dis_losses.append(d_loss)
@@ -618,7 +618,7 @@ if __name__ == '__main__':
 
                 # Train the encoder model
                 encoder_loss = encoder.train_on_batch(generated_images, z_batch)
-                print(f"\tEncoder loss: {encoder_loss}")
+                # print(f"\tEncoder loss: {encoder_loss}")
 
                 encoder_losses.append(encoder_loss)
 
@@ -703,7 +703,7 @@ if __name__ == '__main__':
 
                 reconstruction_loss = fr_adversarial_model.train_on_batch([images_batch, y_batch], real_embeddings)
 
-                print(f"\tReconstruction loss: {reconstruction_loss}")
+                # print(f"\tReconstruction loss: {reconstruction_loss}")
 
                 reconstruction_losses.append(reconstruction_loss)
 
