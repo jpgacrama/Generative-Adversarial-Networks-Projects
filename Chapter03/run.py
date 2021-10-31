@@ -26,6 +26,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 # Pickle Object to store variables
 PICKLE_IMAGES_FILE_NAME = 'pickle_images.pkl'
 PICKLE_TRAINING_GAN_FILE_NAME = 'pickle_training_gan.pkl'
+PICKLE_TRAINING_ENCODER_FILE_NAME = 'pickle_training_encoder.pkl'
 
 def clear():
     # for windows
@@ -287,7 +288,7 @@ def load_images(data_dir, image_paths, image_shape):
     except: # Handles all other exceptions
         pass
 
-    if pickle_file_exists == False:
+    if not pickle_file_exists:
         for i, image_path in enumerate(image_paths):
             try:
                 # Load image
@@ -353,8 +354,35 @@ def load_data_when_training_gan():
 
     return epochs_start, index_start
 
+
+def load_data_when_training_encoder():
+    epochs_start = 0
+    index_start = 0
+    try:
+        with open(PICKLE_TRAINING_ENCODER_FILE_NAME, 'rb') as pickle_in:
+            epochs_start = pickle.load(pickle_in)
+            index_start = pickle.load(pickle_in)
+
+        print(f'{PICKLE_TRAINING_ENCODER_FILE_NAME} is loaded successfully')
+    except FileNotFoundError:
+        print(f'{PICKLE_TRAINING_ENCODER_FILE_NAME} does not exist yet. Creating it.')
+
+    except EOFError:
+        print(f'{PICKLE_TRAINING_ENCODER_FILE_NAME} is corrupted. Deleting it.')
+        os.remove(PICKLE_TRAINING_ENCODER_FILE_NAME)
+
+    except: # Handles all other exceptions
+        pass
+
+    return epochs_start, index_start
+
 def save_data_when_training_gan(epochs, index):
     with open(PICKLE_TRAINING_GAN_FILE_NAME, 'wb') as pickle_out:
+        pickle.dump(epochs, pickle_out)
+        pickle.dump(index, pickle_out)
+
+def save_data_when_training_encoder(epochs, index):
+    with open(PICKLE_TRAINING_ENCODER_FILE_NAME, 'wb') as pickle_out:
         pickle.dump(epochs, pickle_out)
         pickle.dump(index, pickle_out)
 
@@ -539,14 +567,19 @@ if __name__ == '__main__':
         y = np.reshape(np.array(y), [len(y), 1])
         y = to_categorical(y, num_classes=num_classes)
 
+        # Call function to load data from previous training run
+        epochs_start = 0
+        index_start = 0
+        epochs_start, index_start = load_data_when_training_encoder()
+
         print(f'\n\n #################### TRAINING ENCODER ####################\n\n')
-        for epoch in range(epochs):
+        for epoch in range(epochs_start, epochs):
             print(f"\nEpoch: {epoch + 1} out of {len(range(epochs))}")
 
             encoder_losses = []
 
             number_of_batches = int(z_i.shape[0] / batch_size)
-            for index in range(number_of_batches):
+            for index in range(index_start, number_of_batches):
                 print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
 
                 z_batch = z_i[index * batch_size:(index + 1) * batch_size]
@@ -562,6 +595,9 @@ if __name__ == '__main__':
 
             # Write the encoder loss to Tensorboard
             write_log(tensorboard, "encoder_loss", np.mean(encoder_losses), epoch)
+
+            # Save to pickle to future use
+            save_data_when_training_encoder(epoch, index)
 
         # Save the encoder model
         encoder.save_weights("encoder.h5")
