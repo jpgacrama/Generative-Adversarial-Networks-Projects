@@ -24,7 +24,8 @@ import pickle
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 # Pickle Object to store variables
-PICKLE_FILE_NAME = 'pickle_objects.pkl'
+PICKLE_IMAGES_FILE_NAME = 'pickle_images.pkl'
+PICKLE_TRAINING_GAN_FILE_NAME = 'pickle_training_gan.pkl'
 
 def clear():
     # for windows
@@ -271,17 +272,17 @@ def load_images(data_dir, image_paths, image_shape):
     print(f'Loading {number_of_images} images')
 
     try:
-        with open(PICKLE_FILE_NAME, 'rb') as pickle_in:
+        with open(PICKLE_IMAGES_FILE_NAME, 'rb') as pickle_in:
             images = pickle.load(pickle_in)
 
         pickle_file_exists = True
-        print(f'{PICKLE_FILE_NAME} is loaded successfully')
+        print(f'{PICKLE_IMAGES_FILE_NAME} is loaded successfully')
     except FileNotFoundError:
-        print(f'{PICKLE_FILE_NAME} does not exist yet. Creating it.')
+        print(f'{PICKLE_IMAGES_FILE_NAME} does not exist yet. Creating it.')
 
     except EOFError:
-        print(f'{PICKLE_FILE_NAME} is corrupted. Deleting it.')
-        os.remove(PICKLE_FILE_NAME)
+        print(f'{PICKLE_IMAGES_FILE_NAME} is corrupted. Deleting it.')
+        os.remove(PICKLE_IMAGES_FILE_NAME)
 
     except: # Handles all other exceptions
         pass
@@ -308,7 +309,7 @@ def load_images(data_dir, image_paths, image_shape):
             except Exception as e:
                 print(f"Error at {i} with Exception {e}")
         
-        with open('pickle_objects.pkl', 'wb') as pickle_out:
+        with open(PICKLE_IMAGES_FILE_NAME, 'wb') as pickle_out:
             pickle.dump(images, pickle_out)
 
     print('Finished loading all images')
@@ -331,6 +332,31 @@ def write_log(callback, name, value, batch_no):
     with writer.as_default():
         tf.summary.scalar(name, value, step=batch_no)
 
+def load_data_when_training_gan():
+    epochs_start = 0
+    index_start = 0
+    try:
+        with open(PICKLE_TRAINING_GAN_FILE_NAME, 'rb') as pickle_in:
+            epochs_start = pickle.load(pickle_in)
+            index_start = pickle.load(pickle_in)
+
+        print(f'{PICKLE_TRAINING_GAN_FILE_NAME} is loaded successfully')
+    except FileNotFoundError:
+        print(f'{PICKLE_TRAINING_GAN_FILE_NAME} does not exist yet. Creating it.')
+
+    except EOFError:
+        print(f'{PICKLE_TRAINING_GAN_FILE_NAME} is corrupted. Deleting it.')
+        os.remove(PICKLE_TRAINING_GAN_FILE_NAME)
+
+    except: # Handles all other exceptions
+        pass
+
+    return epochs_start, index_start
+
+def save_data_when_training_gan(epochs, index):
+    with open(PICKLE_TRAINING_GAN_FILE_NAME, 'wb') as pickle_out:
+        pickle.dump(epochs, pickle_out)
+        pickle.dump(index, pickle_out)
 
 def save_rgb_img(img, path):
     """
@@ -410,14 +436,20 @@ if __name__ == '__main__':
     """
     if TRAIN_GAN:
         print(f'\n\n #################### TRAINING GAN ####################\n\n')
-        for epoch in range(epochs):
+        
+        # Call function to load data from previous training run
+        epochs_start = 0
+        index_start = 0
+        epochs_start, index_start = load_data_when_training_gan()
+
+        for epoch in range(epochs_start, epochs):
             print(f"\nEpoch: {epoch + 1} out of {len(range(epochs))}")
 
             gen_losses = []
             dis_losses = []
 
             number_of_batches = int(len(loaded_images) / batch_size)
-            for index in range(number_of_batches):
+            for index in range(index_start, number_of_batches):
                 print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
 
                 images_batch = loaded_images[index * batch_size:(index + 1) * batch_size]
@@ -474,6 +506,9 @@ if __name__ == '__main__':
 
                 for i, img in enumerate(gen_images[:5]):
                     save_rgb_img(img, path="results/img_{}_{}.png".format(epoch, i))
+
+                # Save to pickle to future use
+                save_data_when_training_gan(epoch, index)
 
         # Save networks
         try:
