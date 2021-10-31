@@ -538,12 +538,12 @@ if __name__ == '__main__':
                 # Save to pickle to future use
                 save_data_when_training_gan(epoch, index)
 
-        # Save networks
-        try:
-            generator.save_weights("generator.h5")
-            discriminator.save_weights("discriminator.h5")
-        except Exception as e:
-            print(f"Error: {e}")
+                # Save networks
+                try:
+                    generator.save_weights("generator.h5")
+                    discriminator.save_weights("discriminator.h5")
+                except Exception as e:
+                    print(f"Error: {e}")
 
     """
     Train encoder

@@ -16,3 +16,5 @@ Chapter02/models/
 Chapter03/results/
 
 Chapter03/.ipynb_checkpoints/
+
+*.h5
