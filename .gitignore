@@ -14,3 +14,5 @@ Chapter02/models/
 *.tar
 
 Chapter03/results/
+
+Chapter03/.ipynb_checkpoints/
