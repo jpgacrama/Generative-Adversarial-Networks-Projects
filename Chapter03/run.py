@@ -498,9 +498,11 @@ if __name__ == '__main__':
             gen_losses = []
             dis_losses = []
 
-            number_of_batches = int(len(loaded_images) / batch_size)
-            for index in range(index_start, number_of_batches):
-                print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
+            number_of_batches = range(index_start, int(len(loaded_images) / batch_size))
+            pbar = tqdm(total=len(number_of_batches)) # Init pbar
+
+            for index in number_of_batches:
+                # print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
 
                 images_batch = loaded_images[index * batch_size:(index + 1) * batch_size]
                 images_batch = images_batch / 127.5 - 1.0
@@ -536,6 +538,8 @@ if __name__ == '__main__':
 
                 gen_losses.append(g_loss)
                 dis_losses.append(d_loss)
+                
+                pbar.update(n=1) # Increments counter
 
             # Write losses to Tensorboard
             write_log(tensorboard, 'g_loss', np.mean(gen_losses), epoch)
