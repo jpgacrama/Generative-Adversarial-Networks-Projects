@@ -502,8 +502,6 @@ if __name__ == '__main__':
             pbar = tqdm(total=len(number_of_batches)) # Init pbar
 
             for index in number_of_batches:
-                # print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
-
                 images_batch = loaded_images[index * batch_size:(index + 1) * batch_size]
                 images_batch = images_batch / 127.5 - 1.0
                 images_batch = images_batch.astype(np.float32)
@@ -522,7 +520,6 @@ if __name__ == '__main__':
                 d_loss_fake = discriminator.train_on_batch([initial_recon_images, y_batch], fake_labels)
 
                 d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
-                # print(f"\td_loss:{d_loss}")
 
                 """
                 Train the generator network
@@ -533,8 +530,6 @@ if __name__ == '__main__':
                 random_labels = to_categorical(random_labels, 6)
 
                 g_loss = adversarial_model.train_on_batch([z_noise2, random_labels], np.asarray([1] * batch_size))
-
-                # print(f"\tg_loss:{g_loss}")
 
                 gen_losses.append(g_loss)
                 dis_losses.append(d_loss)
@@ -611,10 +606,10 @@ if __name__ == '__main__':
 
             encoder_losses = []
 
-            number_of_batches = int(z_i.shape[0] / batch_size)
-            for index in range(index_start, number_of_batches):
-                print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
+            number_of_batches = range(index_start, int(z_i.shape[0] / batch_size))
+            pbar = tqdm(total=len(number_of_batches)) # Init pbar
 
+            for index in number_of_batches:
                 z_batch = z_i[index * batch_size:(index + 1) * batch_size]
                 y_batch = y[index * batch_size:(index + 1) * batch_size]
 
@@ -625,6 +620,7 @@ if __name__ == '__main__':
                 # print(f"\tEncoder loss: {encoder_loss}")
 
                 encoder_losses.append(encoder_loss)
+                pbar.update(n=1) # Increments counter
 
             # Write the encoder loss to Tensorboard
             write_log(tensorboard, "encoder_loss", np.mean(encoder_losses), epoch)
