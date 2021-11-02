@@ -687,25 +687,20 @@ if __name__ == '__main__':
             print(f"\nEpoch: {epoch + 1} out of {len(range(epochs))}")
             reconstruction_losses = []
 
-            number_of_batches = int(len(loaded_images) / batch_size)
-            for index in range(index_start, number_of_batches):
-                print(f"\tBatch: {index + 1} out of {len(range(number_of_batches))}\n")
+            number_of_batches = range(index_start, int(len(loaded_images) / batch_size))
+            pbar = tqdm(total=len(number_of_batches)) # Init pbar
 
+            for index in number_of_batches:
                 images_batch = loaded_images[index * batch_size:(index + 1) * batch_size]
                 images_batch = images_batch / 127.5 - 1.0
                 images_batch = images_batch.astype(np.float32)
 
                 y_batch = y[index * batch_size:(index + 1) * batch_size]
-
                 images_batch_resized = image_resizer.predict_on_batch(images_batch)
-
                 real_embeddings = fr_model.predict_on_batch(images_batch_resized)
-
                 reconstruction_loss = fr_adversarial_model.train_on_batch([images_batch, y_batch], real_embeddings)
-
-                # print(f"\tReconstruction loss: {reconstruction_loss}")
-
                 reconstruction_losses.append(reconstruction_loss)
+                pbar.update(n=1) # Increments counter
 
             # Write the reconstruction loss to Tensorboard
             write_log(tensorboard, "reconstruction_loss", np.mean(reconstruction_losses), epoch)
