@@ -421,6 +421,9 @@ def save_rgb_img(img, path):
     plt.savefig(path)
     plt.close()
 
+def resized_images_layer(gen_images):
+    return K.resize_images(gen_images, height_factor=3, width_factor=3, data_format='channels_last')
+
 
 if __name__ == '__main__':
     # Define hyperparameters
@@ -430,8 +433,8 @@ if __name__ == '__main__':
     batch_size = 2
     image_shape = (64, 64, 3)
     z_shape = 100
-    TRAIN_GAN = True
-    TRAIN_ENCODER = True
+    TRAIN_GAN = False
+    TRAIN_ENCODER = False
     TRAIN_GAN_WITH_FR = True
     fr_image_shape = (192, 192, 3)
 
@@ -617,7 +620,6 @@ if __name__ == '__main__':
 
                 # Train the encoder model
                 encoder_loss = encoder.train_on_batch(generated_images, z_batch)
-                # print(f"\tEncoder loss: {encoder_loss}")
 
                 encoder_losses.append(encoder_loss)
                 pbar.update(n=1) # Increments counter
@@ -667,8 +669,7 @@ if __name__ == '__main__':
         gen_images = generator([latent0, input_label])
 
         # Resize images to the desired shape
-        resized_images = Lambda(lambda x: K.resize_images(gen_images, height_factor=3, width_factor=3,
-                                                          data_format='channels_last'))(gen_images)
+        resized_images = Lambda(resized_images_layer, name='Lambda_Layer')(gen_images)
         embeddings = fr_model(resized_images)
 
         # Create a Keras model and specify the inputs and outputs for the network
