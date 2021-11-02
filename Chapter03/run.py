@@ -26,7 +26,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 PICKLE_IMAGES_FILE_NAME = 'pickle_images.pkl'
 PICKLE_TRAINING_GAN_FILE_NAME = 'pickle_training_gan.pkl'
 PICKLE_TRAINING_ENCODER_FILE_NAME = 'pickle_training_encoder.pkl'
-PICKLE_TRAINING_GAN_WITH_FR_FILE_NAME = 'pickle_training_encoder.pkl'
+PICKLE_TRAINING_GAN_WITH_FR_FILE_NAME = 'pickle_training_gan_with_fr.pkl'
 
 
 def clear():
