@@ -21,6 +21,7 @@ from keras.layers.pooling import MaxPooling2D
 from keras.optimizers import SGD
 from keras.preprocessing import image
 from scipy.stats import entropy
+from tqdm import tqdm
 
 K.set_image_dim_ordering('tf')
 
@@ -104,7 +105,11 @@ def calculate_inception_score(images_path, batch_size=1, splits=10):
     model = InceptionResNetV2()
 
     images = None
-    for image_ in glob.glob(images_path):
+    total_number_of_images = glob.glob(images_path)
+    pbar = tqdm(total=len(total_number_of_images)) # Init pbar
+
+    print(f'\nLoading {total_number_of_images} images\n')
+    for image_ in total_number_of_images:
         # Load image
         loaded_image = image.load_img(image_, target_size=(299, 299))
 
@@ -120,13 +125,16 @@ def calculate_inception_score(images_path, batch_size=1, splits=10):
         else:
             images = np.concatenate([images, loaded_image], axis=0)
 
-    # Calculate number of batches
-    num_batches = (images.shape[0] + batch_size - 1) // batch_size
+        pbar.update(n=1) # Increments counter
 
+
+    # Calculate number of batches
+    num_batches = range((images.shape[0] + batch_size - 1)) // batch_size
     probs = None
 
     # Use InceptionV3 to calculate probabilities
-    for i in range(num_batches):
+    print(f'\nCalculating probabilities of {num_batches} images\n')
+    for i in num_batches:
         image_batch = images[i * batch_size:(i + 1) * batch_size, :, :, :]
         prob = model.predict(preprocess_input(image_batch))
 
