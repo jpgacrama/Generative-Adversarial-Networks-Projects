@@ -336,11 +336,14 @@ def write_log(callback, name, value, batch_no):
 
 def load_data_when_training_gan():
     epochs_start = 0
-    index_start = 0
+    gen_losses = []
+    dis_losses = []
+
     try:
         with open(PICKLE_TRAINING_GAN_FILE_NAME, 'rb') as pickle_in:
             epochs_start = pickle.load(pickle_in)
-            index_start = pickle.load(pickle_in)
+            gen_losses = pickle.load(pickle_in)
+            dis_losses = pickle.load(pickle_in)
 
         print(f'{PICKLE_TRAINING_GAN_FILE_NAME} is loaded successfully')
     except FileNotFoundError:
@@ -353,16 +356,15 @@ def load_data_when_training_gan():
     except: # Handles all other exceptions
         pass
 
-    return epochs_start, index_start
-
+    return epochs_start, gen_losses, dis_losses
 
 def load_data_when_training_encoder():
     epochs_start = 0
-    index_start = 0
+    encoder_losses = []
     try:
         with open(PICKLE_TRAINING_ENCODER_FILE_NAME, 'rb') as pickle_in:
             epochs_start = pickle.load(pickle_in)
-            index_start = pickle.load(pickle_in)
+            encoder_losses = pickle.load(pickle_in)
 
         print(f'{PICKLE_TRAINING_ENCODER_FILE_NAME} is loaded successfully')
     except FileNotFoundError:
@@ -375,15 +377,15 @@ def load_data_when_training_encoder():
     except: # Handles all other exceptions
         pass
 
-    return epochs_start, index_start
+    return epochs_start, encoder_losses
 
 def load_data_when_training_gan_with_fr():
     epochs_start = 0
-    index_start = 0
+    reconstruction_losses = []
     try:
         with open(PICKLE_TRAINING_GAN_WITH_FR_FILE_NAME, 'rb') as pickle_in:
             epochs_start = pickle.load(pickle_in)
-            index_start = pickle.load(pickle_in)
+            reconstruction_losses = pickle.load(pickle_in)
 
         print(f'{PICKLE_TRAINING_GAN_WITH_FR_FILE_NAME} is loaded successfully')
     except FileNotFoundError:
@@ -396,7 +398,7 @@ def load_data_when_training_gan_with_fr():
     except: # Handles all other exceptions
         pass
 
-    return epochs_start, index_start
+    return epochs_start, reconstruction_losses
 
 def save_data_when_training_gan(epochs, gen_losses, dis_losses):
     with open(PICKLE_TRAINING_GAN_FILE_NAME, 'wb') as pickle_out:
@@ -436,7 +438,7 @@ if __name__ == '__main__':
     # Define hyperparameters
     data_dir = "data"
     wiki_dir = os.path.join(data_dir, "wiki_crop")
-    epochs = 50
+    epochs = 1
     batch_size = 2
     image_shape = (64, 64, 3)
     z_shape = 100
@@ -498,17 +500,19 @@ if __name__ == '__main__':
         print(f'\n\n #################### TRAINING GAN ####################\n\n')
         
         # Call function to load data from previous training run
-        epochs_start = 0
-        index_start = 0
-        epochs_start, index_start = load_data_when_training_gan()
+        epoch_start = 0
+        gen_losses = []
+        dis_losses = []
+        epoch_start, gen_losses, dis_losses = load_data_when_training_gan()
 
-        for epoch in range(epochs_start, epochs):
+        for epoch in range(epoch_start, epochs):
             print(f"\nEpoch: {epoch + 1} out of {len(range(epochs))}")
 
-            gen_losses = []
-            dis_losses = []
+            if epoch > epoch_start:
+                gen_losses = []
+                dis_losses = []
 
-            number_of_batches = range(index_start, int(len(loaded_images) / batch_size))
+            number_of_batches = range(int(len(loaded_images) / batch_size))
             pbar = tqdm(total=len(number_of_batches)) # Init pbar
 
             for index in number_of_batches:
@@ -606,17 +610,18 @@ if __name__ == '__main__':
         y = to_categorical(y, num_classes=num_classes)
 
         # Call function to load data from previous training run
-        epochs_start = 0
-        index_start = 0
-        epochs_start, index_start = load_data_when_training_encoder()
+        epoch_start = 0
+        encoder_losses = []
+        epoch_start, encoder_losses = load_data_when_training_encoder()
 
         print(f'\n\n #################### TRAINING ENCODER ####################\n\n')
-        for epoch in range(epochs_start, epochs):
+        for epoch in range(epoch_start, epochs):
             print(f"\nEpoch: {epoch + 1} out of {len(range(epochs))}")
 
-            encoder_losses = []
+            if epoch > epoch_start:
+                encoder_losses = []
 
-            number_of_batches = range(index_start, int(z_i.shape[0] / batch_size))
+            number_of_batches = range(int(z_i.shape[0] / batch_size))
             pbar = tqdm(total=len(number_of_batches)) # Init pbar
 
             for index in number_of_batches:
@@ -687,16 +692,15 @@ if __name__ == '__main__':
         fr_adversarial_model.compile(loss=euclidean_distance_loss, optimizer=adversarial_optimizer)
 
         # Call function to load data from previous training run
-        epochs_start = 0
-        index_start = 0
-        epochs_start, index_start = load_data_when_training_gan_with_fr()
+        epoch_start = 0
+        epoch_start, reconstruction_losses = load_data_when_training_gan_with_fr()
 
         print(f'\n\n #################### TRAINING GAN WITH FACE RECOGNITION ####################\n\n')
-        for epoch in range(epochs_start, epochs):
+        for epoch in range(epoch_start, epochs):
             print(f"\nEpoch: {epoch + 1} out of {len(range(epochs))}")
             reconstruction_losses = []
 
-            number_of_batches = range(index_start, int(len(loaded_images) / batch_size))
+            number_of_batches = range(int(len(loaded_images) / batch_size))
             pbar = tqdm(total=len(number_of_batches)) # Init pbar
 
             for index in number_of_batches:
