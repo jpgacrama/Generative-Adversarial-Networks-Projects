@@ -398,15 +398,22 @@ def load_data_when_training_gan_with_fr():
 
     return epochs_start, index_start
 
-def save_data_when_training_gan(epochs, index):
+def save_data_when_training_gan(epochs, gen_losses, dis_losses):
     with open(PICKLE_TRAINING_GAN_FILE_NAME, 'wb') as pickle_out:
         pickle.dump(epochs, pickle_out)
-        pickle.dump(index, pickle_out)
+        pickle.dump(gen_losses, pickle_out)
+        pickle.dump(dis_losses, pickle_out)
 
-def save_data_when_training_encoder(epochs, index):
+def save_data_when_training_encoder(epoch, encoder_losses):
     with open(PICKLE_TRAINING_ENCODER_FILE_NAME, 'wb') as pickle_out:
-        pickle.dump(epochs, pickle_out)
-        pickle.dump(index, pickle_out)
+        pickle.dump(epoch, pickle_out)
+        pickle.dump(encoder_losses, pickle_out)
+
+def save_data_when_training_gan_with_fr(epoch, encoder_losses):
+    with open(PICKLE_TRAINING_GAN_WITH_FR_FILE_NAME, 'wb') as pickle_out:
+        pickle.dump(epoch, pickle_out)
+        pickle.dump(encoder_losses, pickle_out)
+
 
 def save_rgb_img(img, path):
     """
@@ -543,6 +550,9 @@ if __name__ == '__main__':
             write_log(tensorboard, 'g_loss', np.mean(gen_losses), epoch)
             write_log(tensorboard, 'd_loss', np.mean(dis_losses), epoch)
 
+            # Save to pickle to future use
+            save_data_when_training_gan(epoch, gen_losses, dis_losses)
+
             """
             Generate images after every 10th epoch
             """
@@ -558,9 +568,6 @@ if __name__ == '__main__':
 
                 for i, img in enumerate(gen_images[:5]):
                     save_rgb_img(img, path="results/img_{}_{}.png".format(epoch, i))
-
-                # Save to pickle to future use
-                save_data_when_training_gan(epoch, index)
 
                 # Save networks every 10th epoch
                 try:
@@ -628,7 +635,8 @@ if __name__ == '__main__':
             write_log(tensorboard, "encoder_loss", np.mean(encoder_losses), epoch)
 
             # Save to pickle to future use
-            save_data_when_training_encoder(epoch, index)
+            save_data_when_training_encoder(epoch, encoder_losses)
+
 
             # Save encoder weights every 10th epoch
             if epoch % 10 == 0:
@@ -705,6 +713,8 @@ if __name__ == '__main__':
 
             # Write the reconstruction loss to Tensorboard
             write_log(tensorboard, "reconstruction_loss", np.mean(reconstruction_losses), epoch)
+
+            save_data_when_training_gan_with_fr(epoch, index, reconstruction_losses)
 
             """
             Generate images
