@@ -429,7 +429,7 @@ if __name__ == '__main__':
     # Define hyperparameters
     data_dir = "data"
     wiki_dir = os.path.join(data_dir, "wiki_crop")
-    epochs = 10
+    epochs = 50
     batch_size = 2
     image_shape = (64, 64, 3)
     z_shape = 100
