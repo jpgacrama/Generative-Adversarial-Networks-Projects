@@ -433,8 +433,8 @@ if __name__ == '__main__':
     batch_size = 2
     image_shape = (64, 64, 3)
     z_shape = 100
-    TRAIN_GAN = False
-    TRAIN_ENCODER = False
+    TRAIN_GAN = True
+    TRAIN_ENCODER = True
     TRAIN_GAN_WITH_FR = True
     fr_image_shape = (192, 192, 3)
 
