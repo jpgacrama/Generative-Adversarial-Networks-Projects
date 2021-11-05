@@ -18,15 +18,12 @@ from keras.layers.core import Activation
 from keras.layers.core import Flatten
 from keras.layers import BatchNormalization
 from keras.layers.pooling import MaxPooling2D
-from keras.optimizers import SGD
 from keras.preprocessing import image
 from scipy.stats import entropy
 from tqdm import tqdm
 
 K.set_image_dim_ordering('tf')
-
 np.random.seed(1337)
-
 
 def build_generator():
     gen_model = Sequential()
@@ -134,6 +131,8 @@ def calculate_inception_score(images_path, batch_size=1, splits=10):
 
     # Use InceptionV3 to calculate probabilities
     print(f'\nCalculating probabilities of {num_batches} images\n')
+    pbar = tqdm(total=num_batches) # Init pbar
+
     for i in num_batches:
         image_batch = images[i * batch_size:(i + 1) * batch_size, :, :, :]
         prob = model.predict(preprocess_input(image_batch))
@@ -143,11 +142,15 @@ def calculate_inception_score(images_path, batch_size=1, splits=10):
         else:
             probs = np.concatenate([prob, probs], axis=0)
 
+        pbar.update(n=1) # Increments counter
+
     # Calculate Inception scores
     divs = []
     split_size = probs.shape[0] // splits
 
-    for i in range(splits):
+    range_of_splits = range(splits)
+    pbar = tqdm(total=len(range_of_splits)) # Init pbar
+    for i in range_of_splits:
         prob_batch = probs[(i * split_size):((i + 1) * split_size), :]
         p_y = np.expand_dims(np.mean(prob_batch, 0), 0)
         div = prob_batch * (np.log(prob_batch / p_y))
