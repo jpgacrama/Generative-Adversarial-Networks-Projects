@@ -22,6 +22,10 @@ from keras.preprocessing import image
 from scipy.stats import entropy
 from tqdm import tqdm
 
+# For AnimeFace
+import animeface
+from PIL import Image
+
 K.set_image_dim_ordering('tf')
 np.random.seed(1337)
 
